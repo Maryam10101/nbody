@@ -11,6 +11,7 @@
 
 import sys
 from math import sqrt, pi as PI
+import timeit
 
 
 def combinations(l):
@@ -89,6 +90,10 @@ def advance(dt, n, bodies=SYSTEM, pairs=PAIRS):
             r[0] += dt * vx
             r[1] += dt * vy
             r[2] += dt * vz
+        for name,value in BODIES.items():
+            r = value[0]
+            path = "nbody_py_" + str(n) + "_iter.csv"
+            write_csv_file(path,name,r[0],r[1],r[2])
 
 
 def report_energy(bodies=SYSTEM, pairs=PAIRS, e=0.0):
@@ -112,17 +117,29 @@ def offset_momentum(ref, bodies=SYSTEM, px=0.0, py=0.0, pz=0.0):
     v[1] = py / m
     v[2] = pz / m
 
+def write_csv_header(path):
+    with open(path,"w") as file:
+        file.write("Body name; X-Position; Y-position; Z-Position\n")
+
+def write_csv_file(path, name, x, y, z):
+    with open(path,"a") as file:
+        file.write(f"{name},{x},{y},{z}\n")
 
 def main(n, ref="sun"):
     offset_momentum(BODIES[ref])
     report_energy()
+    path = "nbody_py_" + str(n) + "_iter.csv"
+    write_csv_header(path)
     advance(0.01, n)
     report_energy()
 
 
 if __name__ == "__main__":
     if len(sys.argv) >= 2:
+        start = timeit.default_timer()
         main(int(sys.argv[1]))
+        stop = timeit.default_timer()
+        print(f"Time taken by {sys.argv[1]} iteration was {stop - start} seconds")
         sys.exit(0)
     else:
         print(f"This is {sys.argv[0]}")
