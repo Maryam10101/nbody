@@ -14,7 +14,8 @@
 #define _USE_MATH_DEFINES // https://docs.microsoft.com/en-us/cpp/c-runtime-library/math-constants?view=msvc-160
 #include <cmath>
 #include <iostream>
-
+#include <fstream>
+#include <chrono>
 
 // these values are constant and not allowed to be changed
 const double SOLAR_MASS = 4 * M_PI * M_PI;
@@ -238,6 +239,19 @@ body state[] = {
         }
 };
 
+void write_csv_header (const std::string &path){
+    std::fstream file {path,std::ios::out};
+    if (file.is_open()){
+        file << "Body name; X-Position; Y-position; Z-Position" << std::endl;
+    }
+}
+
+void write_csv_file(const std::string &path, const body &b){
+    std::fstream file {path, std::ios::app};
+    if (file.is_open()){
+        file << b.name << "," << b.position.x << "," << b.position.y << "," << b.position.z << std::endl;
+    }
+}
 
 int main(int argc, char **argv) {
     if (argc != 2) {
@@ -246,12 +260,23 @@ int main(int argc, char **argv) {
         std::cout << "(to set the number of iterations for the n-body simulation)." << std::endl;
         return EXIT_FAILURE;
     } else {
+        auto start = std::chrono::high_resolution_clock::now();
         const unsigned int n = atoi(argv[1]);
         offset_momentum(state);
         std::cout << energy(state) << std::endl;
+        std::cout << energy(state) << std::endl;
+        const std::string path {"nbody_cpp_" + std::to_string(n)+ "_iter.csv"};
+        write_csv_header(path);
         for (int i = 0; i < n; ++i) {
             advance(state, 0.01);
+            for (auto b:state){
+                write_csv_file(path,b);
+            }
         }
+        std::cout << energy(state) << std::endl;
+        auto stop = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+        std::cout << "Time taken by " << n << " iteration was " << duration.count() << " microseconds" << std::endl;
         std::cout << energy(state) << std::endl;
         return EXIT_SUCCESS;
     }
